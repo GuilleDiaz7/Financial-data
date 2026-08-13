@@ -1,0 +1,63 @@
+CREATE DATABASE `investments_data`;
+
+CREATE TABLE dimCompanies (
+	company_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(200),
+    company_ticker VARCHAR(10),
+    currency VARCHAR(10),
+    market VARCHAR(10),
+    data_source VARCHAR(100)
+);
+
+CREATE TABLE dimReports (
+	report_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    company_ID INT,
+	report_code VARCHAR(20),
+    link VARCHAR(200),
+    reported_period VARCHAR(20),
+    period_start_date DATE,
+    period_end_date DATE,
+    publication_date DATE,
+    FOREIGN KEY (company_ID) REFERENCES dimCompanies (company_ID)
+);
+
+CREATE TABLE fctFinancials (
+	financial_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    report_ID INT,
+    category VARCHAR(200),
+    concept VARCHAR(200),
+    reported_value DECIMAL(20, 4),
+    unit VARCHAR(50),
+    period VARCHAR(10),
+    start_date DATE,
+    end_date DATE,
+    timeframe ENUM ( "Current", "Future", "Past" ),
+    note VARCHAR(400),
+    FOREIGN KEY (report_ID) REFERENCES dimReports (report_ID)
+);
+
+CREATE TABLE fctFinancialsConsolidated (
+    financial_consolidated_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    company_ID INT NOT NULL,
+    category VARCHAR(200) NOT NULL,
+    concept VARCHAR(200) NOT NULL,
+    reported_value DECIMAL(20, 4) NOT NULL,
+    unit VARCHAR(50),
+    period ENUM ( 
+		'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12', 
+		'Q1', 'Q2', 'Q3', 'Q4',
+		'1H', '2H',
+		'YEAR'
+	) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    timeframe ENUM( 'Current', 'Future', 'Past' ) NOT NULL,
+    data_status ENUM( 'AS_REPORTED', 'CALCULATED', 'ESTIMATED' ) NOT NULL DEFAULT 'AS_REPORTED',
+    calculation_method VARCHAR(200) NULL,
+    source_report_ID INT NULL,
+    source_financial_ID INT NULL,
+    note VARCHAR(400),
+    FOREIGN KEY (company_ID) REFERENCES dimCompanies(company_ID),
+    FOREIGN KEY (source_report_ID) REFERENCES dimReports(report_ID),
+    FOREIGN KEY (source_financial_ID) REFERENCES fctFinancials(financial_ID)
+);
